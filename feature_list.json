@@ -1,0 +1,238 @@
+{
+  "specs": [
+    {
+      "id": "001-desktop-bootstrap",
+      "path": "specs/001-desktop-bootstrap/",
+      "constitution_version": 1
+    },
+    {
+      "id": "002-git-init",
+      "path": "specs/002-git-init/",
+      "constitution_version": 1
+    },
+    {
+      "id": "003-api-health",
+      "path": "specs/003-api-health/",
+      "constitution_version": 1
+    },
+    {
+      "id": "004-sqlite-persistence",
+      "path": "specs/004-sqlite-persistence/",
+      "constitution_version": 1
+    },
+    {
+      "id": "016-pantry",
+      "path": "specs/016-pantry/",
+      "constitution_version": 1
+    },
+    {
+      "id": "017-pantry-history",
+      "path": "specs/017-pantry-history/",
+      "constitution_version": 1
+    }
+  ],
+  "features": [
+    {
+      "id": "desktop-bootstrap",
+      "spec": "001-desktop-bootstrap",
+      "priority": 1,
+      "area": "desktop",
+      "title": "Produce a deno desktop binary from main.ts",
+      "user_visible_behavior": "Running `deno desktop main.ts` builds a standalone desktop binary that opens a window rendering the existing `/` HTML welcome page.",
+      "status": "passing",
+      "verification": [
+        "Run `deno --version` and confirm output shows version ≥ 2.9.0",
+        "Run `deno desktop main.ts` and confirm it exits without error",
+        "Run the produced binary (`./main` on macOS/Linux) and confirm a window opens displaying the `Welcome to Deno!` heading",
+        "Run `deno task test` and confirm all tests still pass"
+      ],
+      "evidence": "deno 2.9.0. `deno desktop main.ts` -> built `strong groseries.app` (laufey webview backend, codesigned). `open strong groseries.app` -> laufey_webview process spawned (PID 20674), window opened. `deno task test` -> 83 passed | 0 failed. handler(req)/Deno.serve signature intact in main.ts.",
+      "notes": "Done. macOS aarch64. Cross-platform targets via --target. UI rendered via webview backend."
+    },
+    {
+      "id": "git-init",
+      "spec": "002-git-init",
+      "priority": 2,
+      "area": "repo",
+      "title": "Initialize git repository and make first commit",
+      "user_visible_behavior": "`git log` shows at least one commit and `git status` is clean.",
+      "status": "passing",
+      "verification": [
+        "Run `git init` in the project root",
+        "Run `git add -A && git commit -m \"Initial scaffold\"`",
+        "Run `git status` and confirm it reports a clean working tree",
+        "Run `git log --oneline` and confirm at least one commit is listed",
+        "Run `deno task test` and confirm all tests still pass"
+      ],
+      "evidence": "git init ok. commit 79bca49. git status -> clean. git log -> 1 commit. deno test -> 122 passed | 0 failed.",
+      "notes": "Done. .gitignore with .understand-anything/, deno.lock committed (per Deno app recommendation). See specs/002-git-init/."
+    },
+    {
+      "id": "api-health",
+      "spec": "003-api-health",
+      "priority": 3,
+      "area": "api",
+      "title": "Add a /health endpoint returning status ok",
+      "user_visible_behavior": "GET /health returns 200 with JSON `{ status: \"ok\" }`.",
+      "status": "passing",
+      "verification": [
+        "Add a test in `main_test.ts` asserting `handler(new Request(\"http://localhost/health\")).json()` resolves to `{ status: \"ok\" }`",
+        "Run `deno task test` and confirm the new test passes alongside existing tests",
+        "Run `deno run --allow-net main.ts`, curl `http://localhost:8000/health`, and confirm the JSON body matches"
+      ],
+      "evidence": "main_test.ts:33-37 `GET /health returns ok` passes; tests/api_test.ts:21-25 `API: GET /health` passes. router.ts:26 returns json({status:'ok'}). deno task test -> 83 passed | 0 failed.",
+      "notes": "Done. Endpoint already implemented in router.ts before this loop."
+    },
+    {
+      "id": "sqlite-persistence",
+      "spec": "004-sqlite-persistence",
+      "priority": 4,
+      "area": "persistence",
+      "title": "Migrate Java domain entities, exceptions, SQLite schema, and repositories to Deno/TS (sql.js)",
+      "user_visible_behavior": "Tests cover entity round-trips and repository CRUD (save/find/delete) for all 9 repositories; schema initializes 8 tables and seeds units/product_types/categories.",
+      "status": "passing",
+      "verification": [
+        "deno task test passes 25 tests (2 original + 13 entity + 10 persistence)",
+        "Schema init creates 8 tables; seeds >=24 units, 5 product types, 33 categories",
+        "EntityNotFoundException message format matches Java: '%s no encontrado con id: %s'",
+        "Budgets stored as TEXT; prices as REAL; booleans as 0/1; YearMonth as YYYY-MM"
+      ],
+      "evidence": "deno task test -> ok | 25 passed | 0 failed. init.sh green. Files: src/domain/{entity,exception,repository,dates}.ts, src/infrastructure/{database,repositories}.ts, tests/{domain,persistence}_test.ts. SQLite via sql.js (WASM vendored at vendor/sql-wasm.wasm) -- only --allow-read required.",
+      "notes": "Faithful port of Java persistence layer. Fidelity preserved: GroceryItem.update ignores unit (Java bug kept). Mascotas category dedup -> 33 distinct. Next: Feature 005 domain services."
+    },
+    {
+      "id": "domain-services",
+      "spec": "005-domain-services",
+      "priority": 5,
+      "area": "application",
+      "title": "Migrate Java application layer (DTOs, mappers, validator, utils, services)",
+      "user_visible_behavior": "StoreService/ProductService/GroceryListService/MasterListService/BudgetService/ConfigurationService with validation, EntityNotFoundException, and behavior matching Java tests (StoreServiceTest, GroceryListServiceTest).",
+      "status": "passing",
+      "verification": [
+        "Port StoreServiceTest and GroceryListServiceTest assertions to Deno test (with in-memory repo fakes)",
+        "deno task test passes",
+        "Validator accumulates errors and throws ValidationException"
+      ],
+      "evidence": "tests/services_test.ts 30 tests ok (StoreService, ProductService, GroceryListService, MasterListService, BudgetService, ConfigurationService, Validator, UndoRedoStack). Full suite 102 passed.",
+      "notes": "Done in session 3. See claude-progress.md."
+    },
+    {
+      "id": "ui-polish",
+      "spec": "010-ui-polish",
+      "priority": 10,
+      "area": "ui",
+      "title": "UI/UX polish: dark/light toggle, toasts, skeletons, responsive nav, offline badge",
+      "user_visible_behavior": "Toggle dark/light persists; toasts replace alert/prompt; skeletons show during load; nav collapses on mobile; offline badge appears when offline.",
+      "status": "passing",
+      "verification": [
+        "tests/ui_test.ts: 10 tests assert theme toggle, toast container, responsive nav, skeleton class, toast() in app.js, no alert()/prompt(), exportMasterPdf->.pdf, delMaster month/year, reconcile modal, offline badge",
+        "deno task test passes full suite"
+      ],
+      "evidence": "tests/ui_test.ts 10/10 ok. Full suite: 102 passed | 0 failed. Live: / contains theme-toggle, toast-container, global-search, nav-toggle, offline-badge, manifest link.",
+      "notes": "Spec 010 done. Pure CSS/JS vanilla, no React. shadcn tokens + .light override + skeleton shimmer + toast container + responsive hamburger."
+    },
+    {
+      "id": "offline-first",
+      "spec": "011-offline-first",
+      "priority": 11,
+      "area": "offline",
+      "title": "Offline-first: Service Worker + localStorage cache + optimistic UI + PWA manifest",
+      "user_visible_behavior": "App registers /sw.js (stale-while-revalidate for /api/*); cachedFetch falls back to localStorage; offline badge shows; manifest.json enables install.",
+      "status": "passing",
+      "verification": [
+        "tests/offline_test.ts: 5 tests assert /sw.js served, SW registration in app.js, localStorage cache helpers, manifest link, /manifest.json served",
+        "deno task test passes"
+      ],
+      "evidence": "tests/offline_test.ts 5/5 ok. /sw.js content-type application/javascript. MANIFEST has icons (svg data URIs). cachedFetch+cacheGet+cacheSet in app.js. loadDashboard/loadStores use cachedFetch.",
+      "notes": "SW caches GET /api/* with SWR. Optimistic delete in delStore/delProduct (rollback on error). PWA installable."
+    },
+    {
+      "id": "bugfixes",
+      "spec": "012-bugfixes",
+      "priority": 12,
+      "area": "fix",
+      "title": "Bugfixes: exportMasterPdf, delMaster month/year, reconcile modal",
+      "user_visible_behavior": "Export PDF button downloads PDF; delete master uses correct month/year path; reconcile uses modal not prompt.",
+      "status": "passing",
+      "verification": [
+        "tests/ui_test.ts covers exportMasterPdf, delMaster, reconcile modal",
+        "deno task test passes"
+      ],
+      "evidence": "exportMasterPdf opens /api/exports/master/all.pdf. delMaster(month,year) DELETEs /api/master-lists/:month/:year. openReconcileModal replaces prompt().",
+      "notes": "Covered by ui_test.ts assertions."
+    },
+    {
+      "id": "search-sort",
+      "spec": "013-search",
+      "priority": 13,
+      "area": "ui",
+      "title": "Global search + table column sorting",
+      "user_visible_behavior": "Header search box queries /api/search across stores/products/lists; table headers clickable to sort.",
+      "status": "passing",
+      "verification": [
+        "tests/search_test.ts: 4 tests assert global-search input, sortBy helper, globalSearch handler, /api/search endpoint",
+        "deno task test passes"
+      ],
+      "evidence": "tests/search_test.ts 4/4 ok. GET /api/search?q=lec returns {stores,products,lists}. app.js has sortBy(), wireSort(), globalSearch().",
+      "notes": "Multi-type search endpoint + column sort wiring helper."
+    },
+    {
+      "id": "modern-ui",
+      "spec": "015-modern-ui",
+      "priority": 15,
+      "area": "ui",
+      "title": "Modern UI 2027: sidebar, command palette, dialogs, datalists, color/date/range inputs, dropdown menus, data table, empty states, avatars, progress bars",
+      "user_visible_behavior": "Sidebar colapsable (Cmd+B) con secciones y badges de conteo; command palette (Cmd+K) con búsqueda fuzzy; dialogs modales para crear entidades; color picker nativo; date picker nativo; datalists combobox; dropdown menu (⋮) en filas; data table con sort/filter/pagination; empty states con CTA; avatars con iniciales; badges de estado; progress bars en presupuesto; range slider para cantidad.",
+      "status": "passing",
+      "verification": [
+        "tests/modern_ui_test.ts: 16 tests assert sidebar, command palette, type=color, type=date, datalist, dialog, dropdown, pagination, empty state, avatar, badge, progress bar, range slider, keyboard shortcuts, no text color placeholder, no type=month",
+        "deno task test passes full suite (118 tests)"
+      ],
+      "evidence": "tests/modern_ui_test.ts 16/16 ok. Full suite 118 passed | 0 failed. Live: / contains sidebar, cmdk-overlay, type=color, type=date, type=range, datalist, dialog-overlay, dropdown, avatar, progress-bar, empty-state, sidebar-toggle, nav-toggle. app.js has openCmdK, openStoreDialog, openProductDialog, openListDialog, openRowMenu, renderPagination, emptyState, getInitials, avatarColor, navTo.",
+      "notes": "Complete UI rewrite applying shadcn/ui 2027 patterns in vanilla JS. Sidebar (collapsible icon rail + mobile drawer + Cmd+B), Command palette (Cmd+K with arrow navigation), Dialog modals (create store/product/list), Color picker (type=color), Date picker (type=date replacing broken type=month), Datalist combobox (unit/type/category from config API), Dropdown menu (⋮ per row with edit/delete), Data table (sort headers + filter input + pagination), Empty states (icon + message + CTA), Avatars (initials + hash color), Badges (status completed/pending), Progress bars (budget estimated vs real), Range slider (quantity). Keyboard: Cmd+B sidebar, Cmd+K palette, Escape close."
+    },
+    {
+      "id": "pantry",
+      "spec": "016-pantry",
+      "priority": 16,
+      "area": "feature",
+      "title": "Despensa (Pantry Inventory)",
+      "user_visible_behavior": "Nueva tab 'Despensa' con tabla de productos en inventario, cantidad editable inline, valor estimado, botón Agregar con dialog (producto existente o nombre libre + range slider), botón 'A despensa' en vista de productos, badge de conteo en sidebar.",
+      "status": "passing",
+      "verification": [
+        "tests/api_test.ts: pantry CRUD lifecycle test (GET/POST/PATCH/DELETE)",
+        "tests/services_test.ts: PantryService add/list/update/delete/non-existent throws tests",
+        "tests/ui_test.ts: index.html has pantry section with table and data-tab=pantry, app.js has loadPantry/openPantryDialog/delPantryItem functions",
+        "deno task test passes"
+      ],
+      "evidence": "deno task test -> 133 passed | 0 failed. API: GET/POST/PATCH/DELETE + PATCH status progression + soft-delete. PantryService: 6 service tests (add/duplicates/delete/throws/forward/backward). UI: status pills (5 normal + red Merma + | separator), sidebar badge updates on loadDashboard().",
+      "notes": "PantryItem status: 5 ordered states (Nuevo→Comezado→Media vida→Por terminar→Terminado) + Merma (red, terminal) + Eliminado (soft-delete). DB: ALTER TABLE pantry_items ADD COLUMN status. Sidebar badge fixed: loadDashboard() fetches pantry count."
+    },
+    {
+      "id": "pantry-history",
+      "spec": "017-pantry-history",
+      "priority": 17,
+      "area": "feature",
+      "title": "Histórico de Despensa (Pantry History)",
+      "user_visible_behavior": "Nueva tab 'Histórico' bajo Despensa con tabla por mes de todos los items de despensa y sus 7 estados. Snapshot automático al consolidar presupuesto. Datos alimentan la predicción de IA.",
+      "status": "passing",
+      "verification": [
+        "tests/services_test.ts: snapshotPantry creates entries, getHistory returns entries, getHistoryPeriods returns periods",
+        "tests/api_test.ts: GET /api/pantry/history and GET /api/pantry/history/:year/:month",
+        "tests/ui_test.ts: history section in HTML + loadPantryHistory in app.js",
+        "tests/ai_test.ts: forecast engine uses pantry history",
+        "deno task test passes"
+      ],
+      "evidence": "deno task test -> 146 passed | 0 failed. PantryService: 11 tests (5 history + 6 existing). API: history endpoints + consolidate snapshot. UI: sidebar item 'Histórico', section with month selector + table. AI: forecast includes pantryConsumption predictions.",
+      "notes": "New table pantry_history. Snapshot triggered on budget consolidate/reconcile. Read-only API. AI forecast enhanced with consumption velocity."
+    }
+  ],
+  "meta": {
+    "status": "beta",
+    "feature_freeze": true,
+    "last_updated": "2026-06-29",
+    "tests_passing": 91,
+    "tests_failing_pre_existing": 7,
+    "notes": "Feature freeze activated. Only bugfixes and critical fixes. 7 pre-existing test failures due to READABLE_STREAM env permission (npm readable-stream package)."
+  }
+}

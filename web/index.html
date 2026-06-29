@@ -1,0 +1,1647 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/icon.png">
+    <meta name="theme-color" content="#7c3aed">
+    <title>StrongGroseries — Gestión de Compras</title>
+    <link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script
+      src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+    :root {
+      --background: 240 10% 3.9%;
+      --foreground: 0 0% 98%;
+      --card: 240 10% 5.5%;
+      --card-foreground: 0 0% 98%;
+      --popover: 240 10% 5.5%;
+      --popover-foreground: 0 0% 98%;
+      --primary: 262 83% 58%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4% 16%;
+      --secondary-foreground: 0 0% 98%;
+      --muted: 240 4% 16%;
+      --muted-foreground: 240 5% 65%;
+      --accent: 240 4% 16%;
+      --accent-foreground: 0 0% 98%;
+      --destructive: 0 72% 51%;
+      --destructive-foreground: 0 0% 98%;
+      --success: 142 71% 45%;
+      --warning: 38 92% 50%;
+      --border: 240 4% 16%;
+      --input: 240 4% 18%;
+      --ring: 262 83% 58%;
+      --radius: 0.5rem;
+      --sidebar-width: 240px;
+      --sidebar-width-collapsed: 64px;
+      --bg: hsl(var(--background));
+      --panel: hsl(var(--card));
+      --text: hsl(var(--foreground));
+      --ok: hsl(var(--success));
+      --warn: hsl(var(--warning));
+      --err: hsl(var(--destructive));
+    }
+    .light {
+      --background: 0 0% 100%;
+      --foreground: 240 10% 3.9%;
+      --card: 0 0% 100%;
+      --card-foreground: 240 10% 3.9%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 240 10% 3.9%;
+      --primary: 262 83% 58%;
+      --primary-foreground: 0 0% 98%;
+      --secondary: 240 4.8% 95.9%;
+      --secondary-foreground: 240 5.9% 10%;
+      --muted: 240 4.8% 95.9%;
+      --muted-foreground: 240 3.8% 46.1%;
+      --accent: 240 4.8% 95.9%;
+      --accent-foreground: 240 5.9% 10%;
+      --destructive: 0 72.2% 50.6%;
+      --destructive-foreground: 0 0% 98%;
+      --success: 142 71% 35%;
+      --warning: 38 92% 45%;
+      --border: 240 5.9% 90%;
+      --input: 240 5.9% 90%;
+      --ring: 262 83% 58%;
+    }
+    * {
+      box-sizing: border-box;
+      border-color: hsl(var(--border));
+    }
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+      font-feature-settings: "rlig" 1, "calt" 1;
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+      display: flex;
+    }
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: hsl(var(--muted)) transparent;
+    }
+    *::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    *::-webkit-scrollbar-thumb {
+      background: hsl(var(--muted));
+      border-radius: 3px;
+    }
+    *::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::selection {
+      background: hsl(var(--primary) / 0.3);
+    }
+
+    /* ===== Sidebar ===== */
+    #sidebar {
+      width: var(--sidebar-width);
+      flex-shrink: 0;
+      background: hsl(var(--card));
+      border-right: 1px solid hsl(var(--border));
+      display: flex;
+      flex-direction: column;
+      transition: width .2s ease;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow: hidden;
+    }
+    #sidebar.collapsed {
+      width: var(--sidebar-width-collapsed);
+    }
+    #sidebar.collapsed .sidebar-label {
+      display: none;
+    }
+    #sidebar.collapsed .sidebar-group-label {
+      display: none;
+    }
+    #sidebar.collapsed .sidebar-badge {
+      display: none;
+    }
+    .sidebar-header {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid hsl(var(--border));
+      flex-shrink: 0;
+    }
+    .sidebar-header .logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      flex-shrink: 0;
+    }
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .sidebar-group {
+      margin-bottom: 8px;
+    }
+    .sidebar-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(var(--muted-foreground));
+      padding: 8px 12px 4px;
+      white-space: nowrap;
+    }
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      color: hsl(var(--muted-foreground));
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color .15s, color .15s;
+      white-space: nowrap;
+      border: 0;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .sidebar-item:hover {
+      background: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+    }
+    .sidebar-item.active {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+    }
+    .sidebar-item i {
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+      font-size: 15px;
+    }
+    .sidebar-label {
+      flex: 1;
+    }
+    .sidebar-badge {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .sidebar-item.active .sidebar-badge {
+      background: hsl(var(--primary) / 0.3);
+      color: hsl(var(--primary-foreground));
+    }
+    .sidebar-rail {
+      position: absolute;
+      right: -4px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      cursor: col-resize;
+    }
+    .sidebar-footer {
+      padding: 8px;
+      border-top: 1px solid hsl(var(--border));
+      flex-shrink: 0;
+      display: flex;
+      gap: 4px;
+    }
+
+    /* ===== Main content area ===== */
+    #main-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 24px;
+      background: hsl(var(--card));
+      border-bottom: 1px solid hsl(var(--border));
+      flex-shrink: 0;
+    }
+    .topbar .icon-btn {
+      flex-shrink: 0;
+    }
+    #global-search {
+      flex: 1;
+      max-width: 400px;
+      height: 36px;
+      padding: 0 14px;
+      border-radius: calc(var(--radius) - 2px);
+      border: 1px solid hsl(var(--input));
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    #global-search:focus {
+      outline: none;
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3);
+    }
+    .topbar-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #offline-badge {
+      display: none;
+      background: hsl(var(--warning));
+      color: hsl(0 0% 8%);
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    #offline-badge.show {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .kbd-hint {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      padding: 2px 6px;
+      border: 1px solid hsl(var(--border));
+      border-radius: 4px;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .tab {
+      display: none;
+    }
+    .tab.active {
+      display: block;
+    }
+    h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 16px;
+      letter-spacing: -0.02em;
+    }
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+    .page-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .page-header .actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* ===== Card / Panel ===== */
+    .panel,
+    .card {
+      background: hsl(var(--card));
+      color: hsl(var(--card-foreground));
+      padding: 20px;
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+    }
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ===== Table (Data Table) ===== */
+    .table-wrapper {
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      overflow: visible;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    thead {
+      background: hsl(var(--secondary));
+    }
+    th,
+    td {
+      padding: 12px 14px;
+      text-align: left;
+      vertical-align: middle;
+    }
+    tbody tr {
+      border-top: 1px solid hsl(var(--border));
+      transition: background-color .15s;
+    }
+    tbody tr:hover {
+      background: hsl(var(--accent) / 0.4);
+    }
+    th {
+      color: hsl(var(--muted-foreground));
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    th:hover {
+      color: hsl(var(--foreground));
+    }
+    th .sort-icon {
+      margin-left: 4px;
+      opacity: 0.5;
+      font-size: 10px;
+    }
+    th.sorted .sort-icon {
+      opacity: 1;
+      color: hsl(var(--primary));
+    }
+
+    /* ===== Inputs ===== */
+    input,
+    select,
+    textarea {
+      padding: 8px 12px;
+      border-radius: calc(var(--radius) - 2px);
+      border: 1px solid hsl(var(--input));
+      background: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-size: 14px;
+      height: 36px;
+      transition: border-color .15s, box-shadow .15s;
+      font-family: inherit;
+    }
+    input::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: hsl(var(--ring));
+      box-shadow: 0 0 0 2px hsl(var(--ring) / 0.3);
+    }
+    input[type="color"] {
+      padding: 2px;
+      height: 36px;
+      width: 44px;
+      cursor: pointer;
+    }
+    input[type="range"] {
+      padding: 0;
+      height: 36px;
+      accent-color: hsl(var(--primary));
+    }
+    input[type="date"] {
+      color-scheme: dark;
+    }
+    .light input[type="date"] {
+      color-scheme: light;
+    }
+    select {
+      cursor: pointer;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 500;
+      color: hsl(var(--muted-foreground));
+      display: block;
+      margin-bottom: 4px;
+    }
+    .field {
+      margin-bottom: 16px;
+    }
+    .field input,
+    .field select {
+      width: 100%;
+    }
+
+    /* ===== Buttons ===== */
+    button.btn {
+      cursor: pointer;
+      border: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 8px 16px;
+      height: 36px;
+      border-radius: calc(var(--radius) - 2px);
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      font-size: 14px;
+      font-weight: 500;
+      transition: background-color .15s, opacity .15s, transform .1s;
+      font-family: inherit;
+    }
+    button.btn:hover {
+      background: hsl(var(--primary) / 0.85);
+    }
+    button.btn:active {
+      transform: translateY(1px);
+    }
+    button.btn.secondary {
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+    }
+    button.btn.secondary:hover {
+      background: hsl(var(--secondary) / 0.8);
+    }
+    button.btn.danger {
+      background: hsl(var(--destructive));
+      color: hsl(var(--destructive-foreground));
+    }
+    button.btn.danger:hover {
+      background: hsl(var(--destructive) / 0.85);
+    }
+    button.btn.ghost {
+      background: transparent;
+      color: hsl(var(--foreground));
+    }
+    button.btn.ghost:hover {
+      background: hsl(var(--accent));
+    }
+    button.btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .icon-btn {
+      background: transparent;
+      border: 1px solid hsl(var(--border));
+      color: hsl(var(--foreground));
+      width: 36px;
+      height: 36px;
+      border-radius: calc(var(--radius) - 2px);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color .15s;
+      flex-shrink: 0;
+    }
+    .icon-btn:hover {
+      background: hsl(var(--accent));
+    }
+
+    /* ===== Badge ===== */
+    .qty-stepper {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qty-stepper button {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qty-stepper button:hover {
+      background: hsl(var(--accent) / 0.8);
+    }
+    .qty-stepper span {
+      min-width: 20px;
+      text-align: center;
+      font-weight: 600;
+    }
+    .qty-display {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 28px;
+      padding: 0 6px;
+      border-radius: 6px;
+      cursor: pointer;
+      background: hsl(var(--accent));
+      border: 1px solid hsl(var(--border));
+      user-select: none;
+    }
+    .qty-display:hover {
+      background: hsl(var(--accent) / 0.8);
+    }
+    .quick-add-row { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: calc(var(--radius) - 2px); cursor: pointer; }
+    .quick-add-row:hover { background: hsl(var(--accent)); }
+    .quick-add-row span:first-child { flex: 1; font-size: 13px; }
+    tr[draggable="true"] {
+      cursor: grab;
+    }
+
+    /* ===== Product list (quick-add area) ===== */
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: hsl(var(--muted));
+      border-radius: calc(var(--radius) - 2px);
+    }
+    .product-list {
+      overflow-y: auto;
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+    }
+    .product-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 13px;
+      border-bottom: 1px solid hsl(var(--border));
+      cursor: pointer;
+      transition: background .1s;
+    }
+    .product-row:last-child {
+      border-bottom: 0;
+    }
+    .product-row:hover {
+      background: hsl(var(--accent));
+    }
+    .product-row:active {
+      background: hsl(var(--accent) / 0.6);
+      transform: scale(0.99);
+    }
+    .product-row .product-name {
+      flex: 1;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .product-row .product-add-btn {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      border: 0;
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      cursor: pointer;
+      font-size: 14px;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background .15s, transform .1s;
+    }
+    .product-row .product-add-btn:hover {
+      background: hsl(var(--primary) / 0.85);
+    }
+    .product-row .product-add-btn:active {
+      transform: scale(0.9);
+    }
+    .product-row .product-qty-tag {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      background: hsl(var(--secondary));
+      padding: 2px 8px;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    tr[draggable="true"] {
+      cursor: grab;
+    }
+    tr[draggable="true"]:active {
+      cursor: grabbing;
+      opacity: 0.6;
+    }
+    .inline-price {
+      width: 80px;
+      height: 30px;
+      padding: 2px 6px;
+      font-size: 13px;
+      text-align: right;
+      border-radius: calc(var(--radius) - 2px);
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      background: hsl(var(--secondary));
+      color: hsl(var(--secondary-foreground));
+      border: 1px solid hsl(var(--border));
+      line-height: 1.4;
+    }
+    .badge.ok {
+      background: hsl(var(--success) / 0.15);
+      color: hsl(var(--success));
+      border-color: hsl(var(--success) / 0.3);
+    }
+    .badge.warn {
+      background: hsl(var(--warning) / 0.15);
+      color: hsl(var(--warning));
+      border-color: hsl(var(--warning) / 0.3);
+    }
+    .badge.err {
+      background: hsl(var(--destructive) / 0.15);
+      color: hsl(var(--destructive));
+      border-color: hsl(var(--destructive) / 0.3);
+    }
+
+    /* ===== Avatar ===== */
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    /* ===== Progress bar ===== */
+    .progress-bar {
+      height: 8px;
+      background: hsl(var(--secondary));
+      border-radius: 9999px;
+      overflow: hidden;
+    }
+    .progress-bar .fill {
+      height: 100%;
+      background: hsl(var(--primary));
+      border-radius: 9999px;
+      transition: width .3s ease;
+    }
+    .progress-bar .fill.over {
+      background: hsl(var(--destructive));
+    }
+    .progress-bar .fill.under {
+      background: hsl(var(--success));
+    }
+
+    /* ===== Dropdown menu ===== */
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      z-index: 100;
+      min-width: 180px;
+      background: hsl(var(--popover));
+      color: hsl(var(--popover-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      box-shadow: 0 4px 16px hsl(0 0% 0% / 0.3);
+      padding: 4px;
+    }
+    .dropdown.open .dropdown-menu {
+      display: block;
+    }
+    .dropdown-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      color: hsl(var(--popover-foreground));
+      border: 0;
+      background: transparent;
+      width: 100%;
+      text-align: left;
+    }
+    .dropdown-item:hover {
+      background: hsl(var(--accent));
+    }
+    .dropdown-item.danger {
+      color: hsl(var(--destructive));
+    }
+    .dropdown-item.danger:hover {
+      background: hsl(var(--destructive) / 0.1);
+    }
+    .dropdown-separator {
+      height: 1px;
+      background: hsl(var(--border));
+      margin: 4px 0;
+    }
+
+    /* ===== Dialog modal ===== */
+    .dialog-overlay {
+      position: fixed;
+      inset: 0;
+      background: hsl(0 0% 0% / 0.6);
+      z-index: 2000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      animation: fade-in .15s ease;
+    }
+    .dialog-overlay.show {
+      display: flex;
+    }
+    .dialog {
+      background: hsl(var(--card));
+      color: hsl(var(--card-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%;
+      max-width: 480px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
+      animation: dialog-in .2s ease;
+      role: dialog;
+    }
+    .dialog-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .dialog-header h3 {
+      margin: 0;
+    }
+    .dialog-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 20px;
+    }
+    @keyframes fade-in {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+    @keyframes dialog-in {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    /* ===== Command palette (Cmd+K) ===== */
+    #cmdk-overlay {
+      position: fixed;
+      inset: 0;
+      background: hsl(0 0% 0% / 0.6);
+      z-index: 3000;
+      display: none;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 15vh;
+      animation: fade-in .15s ease;
+    }
+    #cmdk-overlay.show {
+      display: flex;
+    }
+    #cmdk {
+      background: hsl(var(--popover));
+      color: hsl(var(--popover-foreground));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      width: 90%;
+      max-width: 560px;
+      box-shadow: 0 8px 32px hsl(0 0% 0% / 0.4);
+      overflow: hidden;
+    }
+    #cmdk-input {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+      padding: 16px 20px;
+      font-size: 16px;
+      background: transparent;
+      color: hsl(var(--popover-foreground));
+      border-bottom: 1px solid hsl(var(--border));
+    }
+    #cmdk-input:focus {
+      box-shadow: none;
+    }
+    #cmdk-list {
+      max-height: 400px;
+      overflow-y: auto;
+      padding: 8px;
+    }
+    .cmdk-group-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: hsl(var(--muted-foreground));
+      padding: 8px 12px 4px;
+    }
+    .cmdk-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .cmdk-item.active,
+    .cmdk-item:hover {
+      background: hsl(var(--accent));
+    }
+    .cmdk-item i {
+      width: 20px;
+      text-align: center;
+      color: hsl(var(--muted-foreground));
+    }
+    .cmdk-item .cmdk-shortcut {
+      margin-left: auto;
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+    }
+    .cmdk-empty {
+      padding: 24px;
+      text-align: center;
+      color: hsl(var(--muted-foreground));
+    }
+
+    /* ===== Empty state ===== */
+    .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: hsl(var(--muted-foreground));
+    }
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+    .empty-state h4 {
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 0 8px;
+      color: hsl(var(--foreground));
+    }
+    .empty-state p {
+      font-size: 14px;
+      margin: 0 0 16px;
+    }
+    .empty-state button.btn i {
+      font-size: 14px;
+      line-height: 1;
+      opacity: 1;
+    }
+
+    /* ===== Skeleton ===== */
+    .skeleton {
+      background: hsl(var(--muted));
+      border-radius: 4px;
+      position: relative;
+      overflow: hidden;
+    }
+    .skeleton::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      transform: translateX(-100%);
+      background: linear-gradient(90deg, transparent, hsl(var(--accent) / 0.6),
+        transparent);
+      animation: shimmer 1.4s infinite;
+    }
+    @keyframes shimmer {
+      100% {
+        transform: translateX(100%);
+      }
+    }
+
+    /* ===== Toast ===== */
+    #toast-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 4000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 360px;
+    }
+    .toast {
+      padding: 12px 16px;
+      border-radius: calc(var(--radius) - 2px);
+      background: hsl(var(--card));
+      color: hsl(var(--card-foreground));
+      border: 1px solid hsl(var(--border));
+      box-shadow: 0 4px 12px hsl(0 0% 0% / 0.3);
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      animation: toast-in .2s ease;
+    }
+    .toast.ok {
+      border-left: 3px solid hsl(var(--success));
+    }
+    .toast.warn {
+      border-left: 3px solid hsl(var(--warning));
+    }
+    .toast.err {
+      border-left: 3px solid hsl(var(--destructive));
+    }
+    @keyframes toast-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ===== Pagination ===== */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+    }
+    .pagination-info {
+      font-size: 13px;
+      color: hsl(var(--muted-foreground));
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pagination-controls button {
+      min-width: 32px;
+      height: 32px;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        z-index: 100;
+        transform: translateX(-100%);
+        transition: transform .2s;
+        width: var(--sidebar-width) !important;
+      }
+      #sidebar.mobile-open {
+        transform: translateX(0);
+      }
+      #sidebar.collapsed {
+        width: var(--sidebar-width) !important;
+      }
+      main {
+        padding: 16px;
+      }
+      .topbar {
+        padding: 10px 16px;
+      }
+      .grid {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    .status-row {
+      white-space: nowrap;
+    }
+    .status-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: default;
+      margin: 1px;
+    }
+    .status-pill.current {
+      background: hsl(var(--primary));
+      color: hsl(var(--primary-foreground));
+      font-weight: 600;
+    }
+    .status-pill.future {
+      background: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+      cursor: pointer;
+      opacity: 0.7;
+    }
+    .status-pill.future:hover {
+      opacity: 1;
+    }
+    .status-pill.past {
+      background: hsl(var(--muted));
+      color: hsl(var(--muted-foreground));
+      opacity: 0.4;
+    }
+    .status-sep {
+      display: inline;
+      padding: 0 4px;
+      color: hsl(var(--muted-foreground));
+      opacity: 0.5;
+      font-size: 13px;
+      user-select: none;
+    }
+    .status-pill.current-merma {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: default;
+      margin: 1px;
+      background: #dc2626;
+      color: white;
+      font-weight: 600;
+    }
+    .status-pill.future-merma {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      cursor: pointer;
+      margin: 1px;
+      background: #dc2626;
+      color: white;
+      opacity: 0.7;
+    }
+    .status-pill.future-merma:hover {
+      opacity: 1;
+    }
+
+    /* Marble diagram */
+    .marble-row td {
+      padding: 16px 8px !important;
+    }
+    .marble-track {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .marble-product-info {
+      min-width: 140px;
+      max-width: 180px;
+      flex-shrink: 0;
+      white-space: normal;
+      line-height: 1.4;
+      padding: 4px 0;
+    }
+    .marble-product-info strong {
+      font-size: 13px;
+    }
+    .marble-sequence {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      flex-wrap: nowrap;
+      flex: 1;
+    }
+    .marble-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: relative;
+      flex: 1;
+    }
+    .marble {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      transition: transform .15s;
+    }
+    .marble:hover {
+      transform: scale(1.5);
+    }
+    .marble-label {
+      font-size: 10px;
+      white-space: nowrap;
+      color: hsl(var(--muted-foreground));
+      position: absolute;
+      top: 26px;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      line-height: 1.3;
+    }
+    .marble-reason {
+      font-size: 9px;
+      color: #dc2626;
+      white-space: nowrap;
+      max-width: 100px;
+      line-height: 1.2;
+      margin-top: 1px;
+    }
+    .marble-line {
+      flex: 1;
+      height: 2px;
+      background: hsl(var(--border));
+      flex-shrink: 0;
+      min-width: 16px;
+    }
+
+    /* Terminal entry (only Merma/Eliminado, no diagram) */
+    .marble-terminal {
+      align-items: center !important;
+    }
+    .marble-terminal-marker {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .marble-terminal-status {
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .marble-terminal-reason {
+      font-size: 10px;
+      color: #dc2626;
+    }
+    @media (max-width: 600px) {
+      .marble-track {
+        flex-direction: column;
+      }
+      .marble-product-info {
+        min-width: 100%;
+        margin-bottom: 6px;
+      }
+    }
+    </style>
+  </head>
+  <body>
+    <!-- ===== Sidebar ===== -->
+    <aside id="sidebar">
+      <div class="sidebar-header">
+        <img src="/icon.png" class="logo" alt="StrongGroseries" onclick="toast('Grocerias Fuertes !!!')">
+      </div>
+      <div class="sidebar-content">
+        <div class="sidebar-group">
+          <div class="sidebar-group-label">General</div>
+          <button class="sidebar-item active"
+            data-tab="dashboard"><i class="fas fa-home"></i><span class="sidebar-label">Dashboard</span></button>
+          <button class="sidebar-item"
+            data-tab="stores"><i class="fas fa-store"></i><span class="sidebar-label">Tiendas</span><span class="sidebar-badge" id="badge-stores">0</span></button>
+          <button class="sidebar-item"
+            data-tab="products"><i class="fas fa-shopping-bag"></i><span class="sidebar-label">Productos</span><span class="sidebar-badge" id="badge-products">0</span></button>
+          <button class="sidebar-item"
+            data-tab="pantry"><i class="fas fa-warehouse"></i><span class="sidebar-label">Despensa</span><span class="sidebar-badge" id="badge-pantry">0</span></button>
+          <button class="sidebar-item"
+            data-tab="pantry-history"><i class="fas fa-history"></i><span class="sidebar-label">Histórico</span></button>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-label">Compras</div>
+          <button class="sidebar-item"
+            data-tab="lists"><i class="fas fa-list-check"></i><span class="sidebar-label">Listas</span><span class="sidebar-badge" id="badge-lists">0</span></button>
+          <button class="sidebar-item"
+            data-tab="master"><i class="fas fa-clipboard-list"></i><span class="sidebar-label">Lista Maestra</span></button>
+          <button class="sidebar-item"
+            data-tab="budget"><i class="fas fa-chart-pie"></i><span class="sidebar-label">Presupuesto</span></button>
+        </div>
+        <div class="sidebar-group">
+          <div class="sidebar-group-label">Sistema</div>
+          <button class="sidebar-item"
+            data-tab="ai"><i class="fas fa-brain"></i><span class="sidebar-label">IA Local</span></button>
+          <button class="sidebar-item"
+            data-tab="config"><i class="fas fa-cog"></i><span class="sidebar-label">Configuración</span></button>
+        </div>
+      </div>
+      <div class="sidebar-footer">
+        <button class="icon-btn" id="sidebar-toggle"
+          aria-label="Colapsar sidebar"
+          style="width:100%"><i class="fas fa-angle-left"></i></button>
+      </div>
+    </aside>
+
+    <!-- ===== Main area ===== -->
+    <div id="main-area">
+      <div class="topbar">
+        <button class="icon-btn" id="nav-toggle" aria-label="Menú"
+          style="display:none"><i class="fas fa-bars"></i></button>
+        <input id="global-search"
+          placeholder="Buscar tiendas, productos, listas..." data-cmd="open">
+        <span class="kbd-hint">⌘K</span>
+        <div class="topbar-actions">
+          <span
+            id="offline-badge"><i class="fas fa-wifi"></i> Sin conexión</span>
+          <button id="theme-toggle" class="icon-btn"
+            aria-label="Tema"><i class="fas fa-moon"></i></button>
+        </div>
+      </div>
+
+      <main>
+        <!-- Dashboard -->
+        <section id="tab-dashboard" class="tab active">
+          <div class="page-header">
+            <h2>Dashboard</h2>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <h3>Resumen</h3>
+              <table id="dashSummary">
+                <thead>
+                  <tr>
+                    <th>Métrica</th>
+                    <th>Valor</th>
+                  </tr>
+                </thead>
+                <tbody id="dashSummaryBody"></tbody>
+              </table>
+            </div>
+            <div class="panel">
+              <h3>Gasto mensual</h3>
+              <canvas id="dashChart" height="200"></canvas>
+            </div>
+          </div>
+          <div
+            class="panel"><h3>Recomendaciones de IA</h3><button class="btn secondary" onclick="loadDashRecs()"><i class="fas fa-sync"></i> Actualizar</button><table id="dashRecs"><thead><tr><th>Producto</th><th>Tienda</th><th>Categoría</th><th>Confianza</th><th>Tipo</th><th>Razón</th><th></th></tr></thead><tbody id="dashRecsBody"></tbody></table></div>
+        </section>
+
+        <!-- Stores -->
+        <section id="tab-stores" class="tab">
+          <div class="page-header">
+            <h2>Tiendas</h2>
+            <div
+              class="actions"><button class="btn" onclick="openStoreDialog()"><i class="fas fa-plus"></i> Nueva Tienda</button></div>
+          </div>
+          <div class="panel" id="storesPanel">
+            <div class="table-wrapper">
+              <table id="storesTable">
+                <thead>
+                  <tr>
+                    <th>Color</th>
+                    <th>Nombre</th>
+                    <th>Productos</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="storesTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Products -->
+        <section id="tab-products" class="tab">
+          <div class="page-header">
+            <h2>Productos</h2>
+            <div
+              class="actions"><button class="btn" onclick="openProductDialog()"><i class="fas fa-plus"></i> Nuevo Producto</button></div>
+          </div>
+          <div class="panel">
+            <div class="row" style="margin-bottom:12px">
+              <input id="prodFilter" placeholder="Filtrar productos..."
+                style="flex:1;max-width:300px">
+              <select
+                id="prodStoreFilter"><option value="">Todas las tiendas</option></select>
+            </div>
+            <div class="table-wrapper">
+              <table id="productsTable">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tienda</th>
+                    <th>Unidad</th>
+                    <th>Tipo</th>
+                    <th>Categoría</th>
+                    <th>Precio</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="productsTableBody"></tbody>
+              </table>
+            </div>
+            <div class="pagination" id="productsPagination"></div>
+          </div>
+        </section>
+
+        <!-- Pantry -->
+        <section id="tab-pantry" class="tab">
+          <div class="page-header">
+            <h2>Despensa</h2>
+            <p class="muted"
+              style="font-size:13px">Se llena automáticamente al consolidar listas. Elimina productos cuando los uses o se echen a perder.</p>
+          </div>
+          <div class="panel">
+            <div class="table-wrapper">
+              <table id="pantryTable">
+                <thead>
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Unidad</th>
+                    <th>Tienda</th>
+                    <th>Valor Est.</th>
+                    <th>Estado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="pantryTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Pantry History -->
+        <section id="tab-pantry-history" class="tab">
+          <div class="page-header">
+            <h2>Histórico de Despensa</h2>
+            <p class="muted"
+              style="font-size:13px">Registro mensual del estado de la despensa. Se genera automáticamente al consolidar presupuesto.</p>
+          </div>
+          <div class="panel">
+            <div class="row"
+              style="margin-bottom:12px;gap:8px;align-items:center;flex-wrap:wrap">
+              <label for="historyMonthSelect"
+                style="font-size:13px">Mes:</label>
+              <select id="historyMonthSelect" onchange="loadPantryHistory()"
+                style="max-width:160px"></select>
+              <input id="historyProductFilter" placeholder="Buscar producto..."
+                oninput="applyHistoryFilters()" style="max-width:160px">
+              <select id="historyStoreFilter" onchange="applyHistoryFilters()"
+                style="max-width:160px"><option value="">Todas las tiendas</option></select>
+              <select id="historyStatusFilter" onchange="applyHistoryFilters()"
+                style="max-width:160px"><option value="">Todos los estados</option></select>
+            </div>
+            <div class="table-wrapper">
+              <table id="pantryHistoryTable">
+                <thead id="pantryHistoryHead">
+                  <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Unidad</th>
+                    <th>Tienda</th>
+                    <th>Valor Est.</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="pantryHistoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lists -->
+        <section id="tab-lists" class="tab">
+          <div class="page-header">
+            <h2>Listas de Compras</h2>
+            <div
+              class="actions"><button class="btn" onclick="openListDialog()"><i class="fas fa-plus"></i> Nueva Lista</button></div>
+          </div>
+          <div class="grid">
+            <div class="panel" style="display:flex;flex-direction:column">
+              <div class="row" style="margin-bottom:8px">
+                <input id="listMonthInput" type="date" style="flex:1"
+                  onchange="loadLists()">
+                <button class="btn"
+                  onclick="loadLists()"><i class="fas fa-sync-alt"></i></button>
+              </div>
+              <div class="table-wrapper" style="flex-shrink:0">
+                <table id="listsTable">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Mes</th>
+                      <th>Items</th>
+                      <th>Total</th>
+                      <th>Estado</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="listsTableBody"></tbody>
+                </table>
+              </div>
+              <div id="productSearch" class="search-box"
+                style="margin:8px 0;display:none;flex-shrink:0">
+                <i class="fas fa-search"
+                  style="color:hsl(var(--muted-foreground));font-size:13px"></i>
+                <input id="productSearchInput"
+                  placeholder="Buscar producto para agregar..."
+                  oninput="renderProductList()"
+                  style="flex:1;border:0;outline:0;background:transparent;font-size:13px">
+                <span id="productCount"
+                  style="font-size:11px;color:hsl(var(--muted-foreground))"></span>
+              </div>
+              <div id="productList" class="product-list"
+                style="display:none;flex:1;min-height:0"></div>
+            </div>
+            <div class="panel">
+              <div class="row" style="margin-bottom:8px">
+                <h3 id="itemsTitle" style="margin:0;flex:1">Items</h3>
+                <span id="itemsState" class="badge warn"
+                  style="display:none"></span>
+                <button class="icon-btn" id="itemsQuickAdd"
+                  onclick="showQuickAddDialog(selectedListStoreId)" title="Agregar productos recurrentes o recomendados"
+                  style="display:none"><i class="fas fa-wand-magic-sparkles"></i></button>
+                <button class="icon-btn" id="undoBtn" onclick="performUndo()"
+                  disabled title="Deshacer"><i class="fas fa-undo"></i></button>
+                <button class="icon-btn" id="redoBtn" onclick="performRedo()"
+                  disabled title="Rehacer"><i class="fas fa-redo"></i></button>
+              </div>
+              <div class="table-wrapper">
+                <table id="itemsTable">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      <th>Producto</th>
+                      <th>Cant</th>
+                      <th>Precio</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="itemsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Master -->
+        <section id="tab-master" class="tab">
+          <div class="page-header">
+            <h2>Lista Maestra</h2>
+          </div>
+          <div class="panel">
+            <div class="table-wrapper">
+              <table id="masterTable">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Tiendas</th>
+                    <th>Total</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="masterTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Budget -->
+        <section id="tab-budget" class="tab">
+          <div class="page-header">
+            <h2>Presupuesto</h2>
+            <div class="actions">
+              <button class="btn secondary" id="budgetViewBtn"
+                onclick="toggleBudgetView()"><i class="fas fa-chart-bar"></i> Anual</button>
+              <select id="budgetYear" style="width:100px"></select>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="table-wrapper">
+              <table id="budgetTable">
+                <thead>
+                  <tr>
+                    <th>Mes</th>
+                    <th>Estimado</th>
+                    <th>Real</th>
+                    <th>Diferencia</th>
+                    <th>Progreso</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="budgetTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Config -->
+        <section id="tab-config" class="tab">
+          <div class="page-header">
+            <h2>Configuración</h2>
+          </div>
+          <div class="grid">
+            <div class="panel">
+              <h3>Unidades</h3>
+              <div
+                class="row"><input id="newUnit" list="config-units" placeholder="Nueva unidad..."><button class="btn" onclick="addConfig('units','newUnit')"><i class="fas fa-plus"></i></button></div>
+              <ul id="unitsList" style="margin-top:12px"></ul>
+            </div>
+            <div class="panel">
+              <h3>Tipos de Producto</h3>
+              <div
+                class="row"><input id="newType" list="config-types" placeholder="Nuevo tipo..."><button class="btn" onclick="addConfig('product-types','newType')"><i class="fas fa-plus"></i></button></div>
+              <ul id="typesList" style="margin-top:12px"></ul>
+            </div>
+            <div class="panel">
+              <h3>Categorías</h3>
+              <div
+                class="row"><input id="newCat" list="config-categories" placeholder="Nueva categoría..."><button class="btn" onclick="addConfig('categories','newCat')"><i class="fas fa-plus"></i></button></div>
+              <ul id="catsList" style="margin-top:12px"></ul>
+            </div>
+          </div>
+          <div class="panel" style="margin-top:16px">
+            <h3>Backup</h3>
+            <p class="muted"
+              style="margin-bottom:12px">Crea y restaura copias de seguridad de tus datos.</p>
+            <div class="row">
+              <button class="btn"
+                onclick="createBackup()"><i class="fas fa-download"></i> Crear Backup</button>
+              <button class="btn secondary"
+                onclick="restoreBackup()"><i class="fas fa-upload"></i> Restaurar Backup</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI -->
+        <section id="tab-ai" class="tab">
+          <div class="page-header">
+            <h2>IA Local</h2>
+          </div>
+          <div class="grid">
+            <div
+              class="panel"><h3>Recomendaciones</h3><button class="btn secondary" onclick="loadAI('recs')"><i class="fas fa-sync"></i> Actualizar</button><table id="aiRecs"><thead><tr><th>Producto</th><th>Tienda</th><th>Categoría</th><th>Confianza</th><th>Tipo</th><th>Razón</th></tr></thead><tbody id="aiRecsBody"></tbody></table></div>
+            <div
+              class="panel"><h3>Pronóstico</h3><button class="btn secondary" onclick="loadAI('forecast')"><i class="fas fa-sync"></i> Actualizar</button><div id="aiForecast" style="margin-top:12px;max-height:600px;overflow-y:auto"></div></div>
+          </div>
+          <div
+            class="panel"><h3>Búsqueda Semántica</h3><input id="searchInput" placeholder="Buscar productos..." oninput="loadAI('search')" style="width:100%;max-width:400px;margin-bottom:12px"><table id="aiSearch"><thead><tr><th>Producto</th><th>Categoría</th><th>Score</th><th>Match</th><th>Precio</th></tr></thead><tbody id="aiSearchBody"></tbody></table></div>
+          <div
+            class="panel"><h3>Anomalías</h3><button class="btn secondary" onclick="loadAI('anomalies')"><i class="fas fa-sync"></i> Actualizar</button><table id="aiAnom"><thead><tr><th>Título</th><th>Severidad</th><th>Descripción</th></tr></thead><tbody id="aiAnomBody"></tbody></table></div>
+        </section>
+      </main>
+    </div>
+
+    <!-- ===== Datalists (combobox data) ===== -->
+    <datalist id="config-units"></datalist>
+    <datalist id="config-types"></datalist>
+    <datalist id="config-categories"></datalist>
+
+    <!-- ===== Dialog modal container ===== -->
+    <div class="dialog-overlay" id="dialog-overlay">
+      <div class="dialog" id="dialog"></div>
+    </div>
+
+    <!-- ===== Command palette (Cmd+K) ===== -->
+    <div id="cmdk-overlay">
+      <div id="cmdk">
+        <input id="cmdk-input" placeholder="Buscar acciones o navegar..."
+          autocomplete="off">
+        <div id="cmdk-list"></div>
+      </div>
+    </div>
+
+    <!-- ===== Toast container ===== -->
+    <div id="toast-container"></div>
+
+    <script src="/app/app.js?v=6"></script>
+  </body>
+</html>
